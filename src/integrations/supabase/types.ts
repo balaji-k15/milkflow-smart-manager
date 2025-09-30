@@ -19,7 +19,7 @@ export type Database = {
           collection_date: string
           created_at: string
           created_by: string | null
-          fat_percentage: number
+          fat_percentage: number | null
           id: string
           notes: string | null
           quantity_liters: number
@@ -31,7 +31,7 @@ export type Database = {
           collection_date?: string
           created_at?: string
           created_by?: string | null
-          fat_percentage: number
+          fat_percentage?: number | null
           id?: string
           notes?: string | null
           quantity_liters: number
@@ -43,7 +43,7 @@ export type Database = {
           collection_date?: string
           created_at?: string
           created_by?: string | null
-          fat_percentage?: number
+          fat_percentage?: number | null
           id?: string
           notes?: string | null
           quantity_liters?: number
@@ -73,7 +73,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
-          phone: string | null
+          phone: string
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
@@ -81,7 +81,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id: string
-          phone?: string | null
+          phone: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
@@ -89,7 +89,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
-          phone?: string | null
+          phone?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }

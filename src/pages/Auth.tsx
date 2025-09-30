@@ -16,14 +16,13 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   
   // Login form state
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPhone, setLoginPhone] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   
   // Signup form state
-  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupName, setSignupName] = useState('');
-  const [signupPhone, setSignupPhone] = useState('');
   const [signupRole, setSignupRole] = useState<'admin' | 'supplier'>('supplier');
 
   // Redirect if already logged in
@@ -37,7 +36,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signIn(loginEmail, loginPassword);
+      await signIn(loginPhone, loginPassword);
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -49,7 +48,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signUp(signupEmail, signupPassword, signupName, signupPhone, signupRole);
+      await signUp(signupPhone, signupPassword, signupName, signupRole);
     } catch (error) {
       console.error('Signup error:', error);
     } finally {
@@ -64,8 +63,8 @@ const Auth = () => {
           <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
             <Milk className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl">MilkFlow Manager</CardTitle>
-          <CardDescription>Smart dairy management system</CardDescription>
+          <CardTitle className="text-2xl">MilkFlow Manager 2025</CardTitle>
+          <CardDescription>Indian Dairy Management System</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -77,13 +76,13 @@ const Auth = () => {
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-phone">Mobile Number</Label>
                   <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    id="login-phone"
+                    type="tel"
+                    placeholder="9876543210"
+                    value={loginPhone}
+                    onChange={(e) => setLoginPhone(e.target.value)}
                     required
                   />
                 </div>
@@ -111,31 +110,20 @@ const Auth = () => {
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder="Enter full name"
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-phone">Phone Number</Label>
+                  <Label htmlFor="signup-phone">Mobile Number</Label>
                   <Input
                     id="signup-phone"
                     type="tel"
-                    placeholder="+1234567890"
+                    placeholder="9876543210"
                     value={signupPhone}
                     onChange={(e) => setSignupPhone(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
                     required
                   />
                 </div>

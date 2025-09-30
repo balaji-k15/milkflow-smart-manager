@@ -90,7 +90,6 @@ export const CollectionsTable = () => {
                 <TableHead>Supplier</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Quantity (L)</TableHead>
-                <TableHead>Fat %</TableHead>
                 <TableHead>Rate/L</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
@@ -98,13 +97,13 @@ export const CollectionsTable = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : filteredCollections.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     {searchTerm ? 'No collections found matching your search' : 'No collections yet'}
                   </TableCell>
                 </TableRow>
@@ -119,10 +118,9 @@ export const CollectionsTable = () => {
                       {collection.suppliers.supplier_code}
                     </TableCell>
                     <TableCell>{Number(collection.quantity_liters).toFixed(2)}</TableCell>
-                    <TableCell>{Number(collection.fat_percentage).toFixed(2)}%</TableCell>
-                    <TableCell>${Number(collection.rate_per_liter).toFixed(4)}</TableCell>
+                    <TableCell>₹{Number(collection.rate_per_liter).toFixed(2)}</TableCell>
                     <TableCell className="text-right font-medium">
-                      ${Number(collection.total_amount).toFixed(2)}
+                      ₹{Number(collection.total_amount).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))

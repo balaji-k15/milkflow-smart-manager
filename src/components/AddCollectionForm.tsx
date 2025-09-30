@@ -23,8 +23,7 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [fatPercentage, setFatPercentage] = useState('');
-  const [baseRate, setBaseRate] = useState('0.50');
+  const [ratePerLiter, setRatePerLiter] = useState('35');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -49,39 +48,33 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
   };
 
   const calculateAmount = () => {
-    if (!quantity || !fatPercentage || !baseRate) {
-      return { ratePerLiter: 0, totalAmount: 0 };
+    if (!quantity || !ratePerLiter) {
+      return 0;
     }
     
     const qty = parseFloat(quantity);
-    const fat = parseFloat(fatPercentage);
-    const base = parseFloat(baseRate);
+    const rate = parseFloat(ratePerLiter);
     
-    // Calculate rate per liter based on fat percentage
-    // Formula: base_rate * (1 + fat_percentage/100)
-    const ratePerLiter = base * (1 + fat / 100);
-    const totalAmount = qty * ratePerLiter;
-    
-    return { ratePerLiter, totalAmount };
+    return qty * rate;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedSupplier || !quantity || !fatPercentage) {
+    if (!selectedSupplier || !quantity || !ratePerLiter) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     setLoading(true);
     try {
-      const { ratePerLiter, totalAmount } = calculateAmount();
+      const totalAmount = calculateAmount();
       
       const { error } = await supabase.from('milk_collections').insert({
         supplier_id: selectedSupplier,
         quantity_liters: parseFloat(quantity),
-        fat_percentage: parseFloat(fatPercentage),
-        rate_per_liter: ratePerLiter,
+        fat_percentage: null,
+        rate_per_liter: parseFloat(ratePerLiter),
         total_amount: totalAmount,
         notes: notes || null,
       });
@@ -93,7 +86,6 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
       // Reset form
       setSelectedSupplier('');
       setQuantity('');
-      setFatPercentage('');
       setNotes('');
       
       onSuccess();
@@ -105,7 +97,7 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
     }
   };
 
-  const { ratePerLiter, totalAmount } = calculateAmount();
+  const totalAmount = calculateAmount();
 
   return (
     <Card>
@@ -147,30 +139,16 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fat">Fat Percentage (%) *</Label>
+              <Label htmlFor="rate">Rate per Liter (₹) *</Label>
               <Input
-                id="fat"
+                id="rate"
                 type="number"
                 step="0.01"
                 min="0"
-                max="100"
-                placeholder="0.00"
-                value={fatPercentage}
-                onChange={(e) => setFatPercentage(e.target.value)}
+                placeholder="35.00"
+                value={ratePerLiter}
+                onChange={(e) => setRatePerLiter(e.target.value)}
                 required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="baseRate">Base Rate ($/L)</Label>
-              <Input
-                id="baseRate"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={baseRate}
-                onChange={(e) => setBaseRate(e.target.value)}
               />
             </div>
           </div>
@@ -187,23 +165,17 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
           </div>
 
           {/* Calculation Display */}
-          {quantity && fatPercentage && baseRate && (
+          {quantity && ratePerLiter && (
             <div className="p-4 bg-muted rounded-lg space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Calculator className="w-4 h-4" />
-                <span>Calculation</span>
+                <span>Total Amount</span>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Rate per Liter:</span>
-                  <div className="font-semibold">${ratePerLiter.toFixed(4)}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Total Amount:</span>
-                  <div className="font-semibold text-lg text-primary">
-                    ${totalAmount.toFixed(2)}
-                  </div>
-                </div>
+              <div className="text-2xl font-bold text-primary">
+                ₹{totalAmount.toFixed(2)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {quantity} liters × ₹{parseFloat(ratePerLiter).toFixed(2)}/liter
               </div>
             </div>
           )}

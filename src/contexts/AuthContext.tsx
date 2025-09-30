@@ -9,8 +9,8 @@ interface AuthContextType {
   session: Session | null;
   userRole: 'admin' | 'supplier' | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, phone: string, role: 'admin' | 'supplier') => Promise<void>;
+  signIn: (phone: string, password: string) => Promise<void>;
+  signUp: (phone: string, password: string, fullName: string, role: 'admin' | 'supplier') => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -77,9 +77,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (phone: string, password: string) => {
+    // For phone auth, we need to format phone as email for Supabase
+    const phoneEmail = `${phone}@milkflow.in`;
+    
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: phoneEmail,
       password,
     });
 
@@ -92,16 +95,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (
-    email: string,
+    phone: string,
     password: string,
     fullName: string,
-    phone: string,
     role: 'admin' | 'supplier'
   ) => {
+    // Format phone as email for Supabase auth
+    const phoneEmail = `${phone}@milkflow.in`;
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
-      email,
+      email: phoneEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
@@ -118,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
 
-    toast.success('Account created successfully! Please check your email to verify your account.');
+    toast.success('Account created successfully! You can now sign in.');
   };
 
   const signOut = async () => {
