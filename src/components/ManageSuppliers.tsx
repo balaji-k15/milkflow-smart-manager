@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { UserPlus, Trash2 } from 'lucide-react';
@@ -27,6 +28,8 @@ export const ManageSuppliers = ({ onUpdate }: ManageSuppliersProps) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<string | null>(null);
   
   // Form state
   const [supplierCode, setSupplierCode] = useState('');
@@ -101,6 +104,34 @@ export const ManageSuppliers = ({ onUpdate }: ManageSuppliersProps) => {
     } catch (error: any) {
       console.error('Error updating supplier:', error);
       toast.error(error.message || 'Failed to update supplier');
+    }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setSupplierToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!supplierToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', supplierToDelete);
+
+      if (error) throw error;
+
+      toast.success('Supplier deleted successfully');
+      fetchSuppliers();
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error deleting supplier:', error);
+      toast.error(error.message || 'Failed to delete supplier');
+    } finally {
+      setDeleteDialogOpen(false);
+      setSupplierToDelete(null);
     }
   };
 
@@ -204,13 +235,22 @@ export const ManageSuppliers = ({ onUpdate }: ManageSuppliersProps) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleActive(supplier.id, supplier.is_active)}
-                      >
-                        {supplier.is_active ? 'Deactivate' : 'Activate'}
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleActive(supplier.id, supplier.is_active)}
+                        >
+                          {supplier.is_active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(supplier.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -219,6 +259,23 @@ export const ManageSuppliers = ({ onUpdate }: ManageSuppliersProps) => {
           </Table>
         </div>
       </CardContent>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this supplier and all associated records. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
