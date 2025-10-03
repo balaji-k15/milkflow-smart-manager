@@ -68,6 +68,15 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
 
     setLoading(true);
     try {
+      // Get supplier details for SMS
+      const { data: supplierData, error: supplierError } = await supabase
+        .from('suppliers')
+        .select('phone, full_name')
+        .eq('id', selectedSupplier)
+        .single();
+
+      if (supplierError) throw supplierError;
+
       const totalAmount = calculateAmount();
       
       const { error } = await supabase.from('milk_collections').insert({
@@ -80,6 +89,23 @@ export const AddCollectionForm = ({ onSuccess }: AddCollectionFormProps) => {
       });
 
       if (error) throw error;
+
+      // Send SMS notification
+      try {
+        const todayDate = new Date().toLocaleDateString('en-IN');
+        const smsMessage = `MilkFlow: Dear ${supplierData.full_name}, ${parseFloat(quantity)}L milk collected on ${todayDate} @ ₹${parseFloat(ratePerLiter)}/L. Total: ₹${totalAmount.toFixed(2)}. Thank you!`;
+        
+        await supabase.functions.invoke('send-sms', {
+          body: {
+            to: supplierData.phone,
+            message: smsMessage,
+          },
+        });
+        console.log('SMS sent successfully');
+      } catch (smsError) {
+        console.error('Failed to send SMS:', smsError);
+        // Don't fail the operation if SMS fails
+      }
 
       toast.success('Collection added successfully!');
       
