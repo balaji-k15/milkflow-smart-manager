@@ -23,6 +23,8 @@ interface Collection {
   fat_percentage: number;
   rate_per_liter: number;
   total_amount: number;
+  created_by: string | null;
+  admin_name?: string;
 }
 
 const Supplier = () => {
@@ -50,6 +52,57 @@ const Supplier = () => {
     fetchSupplierData();
   }, [user, userRole, navigate]);
 
+  // Set up realtime subscription for new collections
+  useEffect(() => {
+    if (!supplier?.id) return;
+
+    const channel = supabase
+      .channel('milk-collections-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'milk_collections',
+          filter: `supplier_id=eq.${supplier.id}`,
+        },
+        async (payload) => {
+          console.log('New collection added:', payload);
+          
+          // Fetch admin name for the new collection
+          let adminName = 'Admin';
+          if (payload.new.created_by) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', payload.new.created_by)
+              .single();
+            
+            adminName = profileData?.full_name || 'Admin';
+          }
+
+          const newCollection = {
+            ...payload.new,
+            admin_name: adminName,
+          } as Collection;
+
+          setCollections((prev) => [newCollection, ...prev].slice(0, 30));
+          
+          // Update stats
+          setStats((prev) => ({
+            totalCollections: prev.totalCollections + Number(newCollection.quantity_liters),
+            totalAmount: prev.totalAmount + Number(newCollection.total_amount),
+            avgFatPercentage: prev.avgFatPercentage, // Recalculate on next full fetch
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supplier?.id]);
+
   const fetchSupplierData = async () => {
     try {
       setLoading(true);
@@ -64,7 +117,7 @@ const Supplier = () => {
       if (supplierError) throw supplierError;
       setSupplier(supplierData);
 
-      // Get collections
+      // Get collections with admin name
       const { data: collectionsData, error: collectionsError } = await supabase
         .from('milk_collections')
         .select('*')
@@ -73,13 +126,33 @@ const Supplier = () => {
         .limit(30);
 
       if (collectionsError) throw collectionsError;
-      setCollections(collectionsData || []);
+
+      // Fetch admin names for each collection
+      const collectionsWithAdmins = await Promise.all(
+        (collectionsData || []).map(async (collection) => {
+          if (collection.created_by) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', collection.created_by)
+              .single();
+            
+            return {
+              ...collection,
+              admin_name: profileData?.full_name || 'Admin',
+            };
+          }
+          return collection;
+        })
+      );
+
+      setCollections(collectionsWithAdmins);
 
       // Calculate stats
-      const totalLiters = collectionsData?.reduce((sum, col) => sum + Number(col.quantity_liters), 0) || 0;
-      const totalAmt = collectionsData?.reduce((sum, col) => sum + Number(col.total_amount), 0) || 0;
-      const avgFat = collectionsData?.length
-        ? collectionsData.reduce((sum, col) => sum + Number(col.fat_percentage), 0) / collectionsData.length
+      const totalLiters = collectionsWithAdmins?.reduce((sum, col) => sum + Number(col.quantity_liters), 0) || 0;
+      const totalAmt = collectionsWithAdmins?.reduce((sum, col) => sum + Number(col.total_amount), 0) || 0;
+      const avgFat = collectionsWithAdmins?.length
+        ? collectionsWithAdmins.reduce((sum, col) => sum + Number(col.fat_percentage), 0) / collectionsWithAdmins.length
         : 0;
 
       setStats({
@@ -168,13 +241,14 @@ const Supplier = () => {
                     <TableHead>Quantity (L)</TableHead>
                     <TableHead>Fat %</TableHead>
                     <TableHead>Rate/L</TableHead>
+                    <TableHead>Added By</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {collections.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
                         No collections yet
                       </TableCell>
                     </TableRow>
@@ -187,6 +261,11 @@ const Supplier = () => {
                         <TableCell>{Number(collection.quantity_liters).toFixed(2)}</TableCell>
                         <TableCell>{Number(collection.fat_percentage).toFixed(2)}%</TableCell>
                         <TableCell>${Number(collection.rate_per_liter).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">
+                            {collection.admin_name || 'Admin'}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-right font-medium">
                           ${Number(collection.total_amount).toFixed(2)}
                         </TableCell>
