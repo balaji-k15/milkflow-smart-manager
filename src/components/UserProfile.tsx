@@ -42,7 +42,7 @@ export const UserProfile = ({ userName }: UserProfileProps) => {
       setIsDeleting(true);
 
       // Delete user account
-      const { error } = await supabase.rpc('delete_user');
+      const { error } = await supabase.rpc('delete_user' as any);
       
       if (error) throw error;
 
