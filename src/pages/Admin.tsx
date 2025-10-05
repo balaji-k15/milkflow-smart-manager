@@ -5,14 +5,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Milk, Users, TrendingUp, DollarSign } from 'lucide-react';
+import { Milk, Users, TrendingUp, DollarSign } from 'lucide-react';
 import { AddCollectionForm } from '@/components/AddCollectionForm';
 import { ManageSuppliers } from '@/components/ManageSuppliers';
 import { CollectionsTable } from '@/components/CollectionsTable';
+import { UserProfile } from '@/components/UserProfile';
 
 const Admin = () => {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
+  const [userName, setUserName] = useState('Admin User');
   const [stats, setStats] = useState({
     totalSuppliers: 0,
     todayCollection: 0,
@@ -31,8 +33,24 @@ const Admin = () => {
       return;
     }
     
+    fetchUserProfile();
     fetchDashboardStats();
   }, [user, userRole, navigate]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      if (data) setUserName(data.full_name);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -70,9 +88,6 @@ const Admin = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -88,10 +103,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground">Admin Dashboard</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <UserProfile userName={userName} />
         </div>
       </header>
 

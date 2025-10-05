@@ -5,8 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LogOut, Milk, TrendingUp, DollarSign } from 'lucide-react';
+import { Milk, TrendingUp, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
+import { UserProfile } from '@/components/UserProfile';
 
 interface SupplierData {
   id: string;
@@ -25,7 +26,7 @@ interface Collection {
 }
 
 const Supplier = () => {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const [supplier, setSupplier] = useState<SupplierData | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -93,9 +94,6 @@ const Supplier = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -113,10 +111,7 @@ const Supplier = () => {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <UserProfile userName={supplier?.full_name || 'Supplier'} />
         </div>
       </header>
 
