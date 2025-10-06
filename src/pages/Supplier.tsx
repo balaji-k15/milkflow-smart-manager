@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Milk, TrendingUp, DollarSign } from 'lucide-react';
+import { Milk, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { UserProfile } from '@/components/UserProfile';
 
@@ -35,7 +35,6 @@ const Supplier = () => {
   const [stats, setStats] = useState({
     totalCollections: 0,
     totalAmount: 0,
-    avgFatPercentage: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -92,7 +91,6 @@ const Supplier = () => {
           setStats((prev) => ({
             totalCollections: prev.totalCollections + Number(newCollection.quantity_liters),
             totalAmount: prev.totalAmount + Number(newCollection.total_amount),
-            avgFatPercentage: prev.avgFatPercentage, // Recalculate on next full fetch
           }));
         }
       )
@@ -151,14 +149,10 @@ const Supplier = () => {
       // Calculate stats
       const totalLiters = collectionsWithAdmins?.reduce((sum, col) => sum + Number(col.quantity_liters), 0) || 0;
       const totalAmt = collectionsWithAdmins?.reduce((sum, col) => sum + Number(col.total_amount), 0) || 0;
-      const avgFat = collectionsWithAdmins?.length
-        ? collectionsWithAdmins.reduce((sum, col) => sum + Number(col.fat_percentage), 0) / collectionsWithAdmins.length
-        : 0;
 
       setStats({
         totalCollections: totalLiters,
         totalAmount: totalAmt,
-        avgFatPercentage: avgFat,
       });
     } catch (error) {
       console.error('Error fetching supplier data:', error);
@@ -191,7 +185,7 @@ const Supplier = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3 mb-8 animate-fade-in">
+        <div className="grid gap-4 md:grid-cols-2 mb-8 animate-fade-in">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Collection</CardTitle>
@@ -210,17 +204,6 @@ const Supplier = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${stats.totalAmount.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">Last 30 entries</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Fat %</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.avgFatPercentage.toFixed(2)}%</div>
               <p className="text-xs text-muted-foreground">Last 30 entries</p>
             </CardContent>
           </Card>
