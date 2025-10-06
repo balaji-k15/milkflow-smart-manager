@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Milk } from 'lucide-react';
-import { useEffect } from 'react';
+import { toast } from 'sonner';
+import { signInSchema, signUpSchema } from '@/lib/validation';
 
 const Auth = () => {
   const { signIn, signUp, user, userRole } = useAuth();
@@ -36,6 +37,13 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Validate input
+      const validation = signInSchema.safeParse({ phone: loginPhone, password: loginPassword });
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        return;
+      }
+      
       await signIn(loginPhone, loginPassword);
     } catch (error) {
       console.error('Login error:', error);
@@ -48,6 +56,18 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Validate input
+      const validation = signUpSchema.safeParse({
+        phone: signupPhone,
+        password: signupPassword,
+        fullName: signupName,
+        role: signupRole
+      });
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        return;
+      }
+      
       await signUp(signupPhone, signupPassword, signupName, signupRole);
     } catch (error) {
       console.error('Signup error:', error);
@@ -136,7 +156,7 @@ const Auth = () => {
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
                 <div className="space-y-2">

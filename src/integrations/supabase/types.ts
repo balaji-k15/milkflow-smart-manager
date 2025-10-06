@@ -74,7 +74,6 @@ export type Database = {
           full_name: string
           id: string
           phone: string
-          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
         Insert: {
@@ -82,7 +81,6 @@ export type Database = {
           full_name: string
           id: string
           phone: string
-          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Update: {
@@ -90,7 +88,6 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string
-          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Relationships: []
@@ -138,6 +135,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
