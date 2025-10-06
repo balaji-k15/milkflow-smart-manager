@@ -5,9 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Milk, DollarSign } from 'lucide-react';
+import { Milk, DollarSign, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { UserProfile } from '@/components/UserProfile';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { toast } from 'sonner';
 
 interface SupplierData {
   id: string;
@@ -50,6 +52,28 @@ const Supplier = () => {
     
     fetchSupplierData();
   }, [user, userRole, navigate]);
+
+  const handleDownload = () => {
+    const csvContent = [
+      ['Date', 'Quantity (L)', 'Rate/L', 'Amount', 'Added By'].join(','),
+      ...collections.map(c => [
+        format(new Date(c.collection_date), 'MMM dd, yyyy'),
+        Number(c.quantity_liters).toFixed(2),
+        Number(c.rate_per_liter).toFixed(2),
+        Number(c.total_amount).toFixed(2),
+        c.admin_name || 'N/A'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `my-collections-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success('Collections downloaded successfully');
+  };
 
   // Set up realtime subscription for new collections
   useEffect(() => {
@@ -163,22 +187,25 @@ const Supplier = () => {
 
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       {/* Header */}
-      <header className="bg-card border-b border-border">
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shadow-glow">
               <Milk className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">MilkFlow Manager</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">MilkFlow Manager</h1>
               <p className="text-sm text-muted-foreground">
                 {supplier?.full_name} ({supplier?.supplier_code})
               </p>
             </div>
           </div>
-          <UserProfile userName={supplier?.full_name || 'Supplier'} />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <UserProfile userName={supplier?.full_name || 'Supplier'} />
+          </div>
         </div>
       </header>
 
@@ -186,34 +213,42 @@ const Supplier = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 mb-8 animate-fade-in">
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow border-primary/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Collection</CardTitle>
-              <Milk className="h-4 w-4 text-muted-foreground" />
+              <Milk className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCollections.toFixed(2)} L</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{stats.totalCollections.toFixed(2)} L</div>
               <p className="text-xs text-muted-foreground">Last 30 entries</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow border-primary/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.totalAmount.toFixed(2)}</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">₹{stats.totalAmount.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">Last 30 entries</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Collections Table */}
-        <Card>
+        <Card className="shadow-lg border-primary/10">
           <CardHeader>
-            <CardTitle>Collection History</CardTitle>
-            <CardDescription>Your recent milk collection records</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Collection History</CardTitle>
+                <CardDescription>Your recent milk collection records</CardDescription>
+              </div>
+              <Button onClick={handleDownload} variant="outline" size="sm" className="gap-2">
+                <Download className="w-4 h-4" />
+                Download CSV
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -243,14 +278,14 @@ const Supplier = () => {
                         </TableCell>
                         <TableCell>{Number(collection.quantity_liters).toFixed(2)}</TableCell>
                         <TableCell>{Number(collection.fat_percentage).toFixed(2)}%</TableCell>
-                        <TableCell>${Number(collection.rate_per_liter).toFixed(2)}</TableCell>
+                        <TableCell>₹{Number(collection.rate_per_liter).toFixed(2)}</TableCell>
                         <TableCell>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-sm font-medium">
                             {collection.admin_name || 'Admin'}
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          ${Number(collection.total_amount).toFixed(2)}
+                          ₹{Number(collection.total_amount).toFixed(2)}
                         </TableCell>
                       </TableRow>
                     ))

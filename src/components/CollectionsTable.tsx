@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
-import { Search, Trash2 } from 'lucide-react';
+import { Search, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Collection {
@@ -98,12 +98,43 @@ export const CollectionsTable = () => {
     }
   };
 
+  const handleDownload = () => {
+    const csvContent = [
+      ['Date', 'Supplier', 'Code', 'Quantity (L)', 'Rate/L', 'Amount'].join(','),
+      ...filteredCollections.map(c => [
+        format(new Date(c.collection_date), 'MMM dd, yyyy'),
+        c.suppliers.full_name,
+        c.suppliers.supplier_code,
+        Number(c.quantity_liters).toFixed(2),
+        Number(c.rate_per_liter).toFixed(2),
+        Number(c.total_amount).toFixed(2)
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `collections-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success('Collections downloaded successfully');
+  };
+
   return (
-    <Card>
+    <Card className="shadow-lg border-primary/10">
       <CardHeader>
-        <CardTitle>Collection Records</CardTitle>
-        <CardDescription>Recent milk collection entries</CardDescription>
-        <div className="relative">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Collection Records</CardTitle>
+            <CardDescription>Recent milk collection entries</CardDescription>
+          </div>
+          <Button onClick={handleDownload} variant="outline" size="sm" className="gap-2">
+            <Download className="w-4 h-4" />
+            Download CSV
+          </Button>
+        </div>
+        <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search by supplier name or code..."
