@@ -12,13 +12,16 @@ import { toast } from 'sonner';
 import { signInSchema, signUpSchema } from '@/lib/validation';
 
 const Auth = () => {
-  const { signIn, signUp, user, userRole } = useAuth();
+  const { signIn, signUp, user, userRole, sendOTP, verifyOTP } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   
   // Login form state
   const [loginPhone, setLoginPhone] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loginOTP, setLoginOTP] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   
   // Signup form state
   const [signupPhone, setSignupPhone] = useState('');
@@ -32,6 +35,47 @@ const Auth = () => {
       navigate(userRole === 'admin' ? '/admin' : '/supplier');
     }
   }, [user, userRole, navigate]);
+
+  const handleSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Validate phone number
+      const validation = signInSchema.safeParse({ phone: loginPhone, password: 'temp123' });
+      if (!validation.success) {
+        toast.error('Please enter a valid 10-digit phone number');
+        return;
+      }
+      
+      await sendOTP(loginPhone);
+      setOtpSent(true);
+    } catch (error) {
+      console.error('OTP error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (loginOTP.length !== 6) {
+        toast.error('Please enter a valid 6-digit OTP');
+        return;
+      }
+
+      const verified = await verifyOTP(loginPhone, loginOTP);
+      if (verified) {
+        setOtpVerified(true);
+        toast.success('Phone verified! Please enter your password.');
+      }
+    } catch (error) {
+      console.error('OTP verification error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,33 +138,78 @@ const Auth = () => {
             </TabsList>
             
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-phone">Mobile Number</Label>
-                  <Input
-                    id="login-phone"
-                    type="tel"
-                    placeholder="9876543210"
-                    value={loginPhone}
-                    onChange={(e) => setLoginPhone(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
+              {!otpSent ? (
+                <form onSubmit={handleSendOTP} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-phone">Mobile Number</Label>
+                    <Input
+                      id="login-phone"
+                      type="tel"
+                      placeholder="9876543210"
+                      value={loginPhone}
+                      onChange={(e) => setLoginPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Sending OTP...' : 'Send OTP'}
+                  </Button>
+                </form>
+              ) : !otpVerified ? (
+                <form onSubmit={handleVerifyOTP} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-otp">Enter OTP</Label>
+                    <Input
+                      id="login-otp"
+                      type="text"
+                      placeholder="000000"
+                      value={loginOTP}
+                      onChange={(e) => setLoginOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      maxLength={6}
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      OTP sent to {loginPhone}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => {
+                        setOtpSent(false);
+                        setLoginOTP('');
+                      }}
+                    >
+                      Change Number
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={loading}>
+                      {loading ? 'Verifying...' : 'Verify OTP'}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Phone verified: {loginPhone} ✓
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
             
             <TabsContent value="signup">

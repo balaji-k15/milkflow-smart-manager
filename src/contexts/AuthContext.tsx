@@ -12,6 +12,8 @@ interface AuthContextType {
   signIn: (phone: string, password: string) => Promise<void>;
   signUp: (phone: string, password: string, fullName: string, role: 'admin' | 'supplier') => Promise<void>;
   signOut: () => Promise<void>;
+  sendOTP: (phone: string) => Promise<void>;
+  verifyOTP: (phone: string, otp: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -161,6 +163,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Successfully signed out!');
   };
 
+  const sendOTP = async (phone: string) => {
+    const { data, error } = await supabase.functions.invoke('send-otp', {
+      body: { phone }
+    });
+
+    if (error) {
+      toast.error('Failed to send OTP');
+      throw error;
+    }
+
+    toast.success('OTP sent to your mobile number');
+  };
+
+  const verifyOTP = async (phone: string, otp: string): Promise<boolean> => {
+    const { data, error } = await supabase.functions.invoke('verify-otp', {
+      body: { phone, otp }
+    });
+
+    if (error || !data?.success) {
+      toast.error('Invalid or expired OTP');
+      return false;
+    }
+
+    return true;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -171,6 +199,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signUp,
         signOut,
+        sendOTP,
+        verifyOTP,
       }}
     >
       {children}
