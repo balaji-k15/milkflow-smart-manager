@@ -16,10 +16,12 @@ interface Collection {
   fat_percentage: number;
   rate_per_liter: number;
   total_amount: number;
+  created_by: string | null;
   suppliers: {
     supplier_code: string;
     full_name: string;
   };
+  admin_name?: string;
 }
 
 export const CollectionsTable = () => {
@@ -62,8 +64,28 @@ export const CollectionsTable = () => {
         .limit(100);
 
       if (error) throw error;
-      setCollections(data || []);
-      setFilteredCollections(data || []);
+
+      // Fetch admin names for each collection
+      const collectionsWithAdmins = await Promise.all(
+        (data || []).map(async (collection) => {
+          if (collection.created_by) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', collection.created_by)
+              .single();
+            
+            return {
+              ...collection,
+              admin_name: profileData?.full_name || 'Admin',
+            };
+          }
+          return { ...collection, admin_name: 'Admin' };
+        })
+      );
+
+      setCollections(collectionsWithAdmins);
+      setFilteredCollections(collectionsWithAdmins);
     } catch (error) {
       console.error('Error fetching collections:', error);
     } finally {
@@ -100,14 +122,15 @@ export const CollectionsTable = () => {
 
   const handleDownload = () => {
     const csvContent = [
-      ['Date', 'Supplier', 'Code', 'Quantity (L)', 'Rate/L', 'Amount'].join(','),
+      ['Date', 'Supplier', 'Code', 'Quantity (L)', 'Rate/L', 'Amount', 'Added By'].join(','),
       ...filteredCollections.map(c => [
         format(new Date(c.collection_date), 'MMM dd, yyyy'),
         c.suppliers.full_name,
         c.suppliers.supplier_code,
         Number(c.quantity_liters).toFixed(2),
         Number(c.rate_per_liter).toFixed(2),
-        Number(c.total_amount).toFixed(2)
+        Number(c.total_amount).toFixed(2),
+        c.admin_name || 'Admin'
       ].join(','))
     ].join('\n');
 
@@ -154,6 +177,7 @@ export const CollectionsTable = () => {
                 <TableHead>Code</TableHead>
                 <TableHead>Quantity (L)</TableHead>
                 <TableHead>Rate/L</TableHead>
+                <TableHead>Added By</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -161,13 +185,13 @@ export const CollectionsTable = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : filteredCollections.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     {searchTerm ? 'No collections found matching your search' : 'No collections yet'}
                   </TableCell>
                 </TableRow>
@@ -183,6 +207,11 @@ export const CollectionsTable = () => {
                     </TableCell>
                     <TableCell>{Number(collection.quantity_liters).toFixed(2)}</TableCell>
                     <TableCell>₹{Number(collection.rate_per_liter).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium">
+                        {collection.admin_name || 'Admin'}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right font-medium">
                       ₹{Number(collection.total_amount).toFixed(2)}
                     </TableCell>
