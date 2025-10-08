@@ -69,18 +69,18 @@ export const CollectionsTable = () => {
       const collectionsWithAdmins = await Promise.all(
         (data || []).map(async (collection) => {
           if (collection.created_by) {
-            const { data: profileData } = await supabase
+            const { data: profileData, error } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', collection.created_by)
-              .single();
+              .maybeSingle();
             
             return {
               ...collection,
-              admin_name: profileData?.full_name || 'Admin',
+              admin_name: profileData?.full_name || 'N/A',
             };
           }
-          return { ...collection, admin_name: 'Admin' };
+          return { ...collection, admin_name: 'N/A' };
         })
       );
 
@@ -130,7 +130,7 @@ export const CollectionsTable = () => {
         Number(c.quantity_liters).toFixed(2),
         Number(c.rate_per_liter).toFixed(2),
         Number(c.total_amount).toFixed(2),
-        c.admin_name || 'Admin'
+        c.admin_name || 'N/A'
       ].join(','))
     ].join('\n');
 
@@ -209,7 +209,7 @@ export const CollectionsTable = () => {
                     <TableCell>₹{Number(collection.rate_per_liter).toFixed(2)}</TableCell>
                     <TableCell>
                       <span className="text-sm font-medium">
-                        {collection.admin_name || 'Admin'}
+                        {collection.admin_name || 'N/A'}
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-medium">

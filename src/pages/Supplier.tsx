@@ -93,15 +93,15 @@ const Supplier = () => {
           console.log('New collection added:', payload);
           
           // Fetch admin name for the new collection
-          let adminName = 'Admin';
+          let adminName = 'N/A';
           if (payload.new.created_by) {
             const { data: profileData } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', payload.new.created_by)
-              .single();
+              .maybeSingle();
             
-            adminName = profileData?.full_name || 'Admin';
+            adminName = profileData?.full_name || 'N/A';
           }
 
           const newCollection = {
@@ -153,18 +153,18 @@ const Supplier = () => {
       const collectionsWithAdmins = await Promise.all(
         (collectionsData || []).map(async (collection) => {
           if (collection.created_by) {
-            const { data: profileData } = await supabase
+            const { data: profileData, error } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', collection.created_by)
-              .single();
+              .maybeSingle();
             
             return {
               ...collection,
-              admin_name: profileData?.full_name || 'Admin',
+              admin_name: profileData?.full_name || 'N/A',
             };
           }
-          return collection;
+          return { ...collection, admin_name: 'N/A' };
         })
       );
 
@@ -281,7 +281,7 @@ const Supplier = () => {
                         <TableCell>₹{Number(collection.rate_per_liter).toFixed(2)}</TableCell>
                         <TableCell>
                           <span className="text-sm font-medium">
-                            {collection.admin_name || 'Admin'}
+                            {collection.admin_name || 'N/A'}
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-medium">
