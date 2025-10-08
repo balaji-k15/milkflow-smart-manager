@@ -257,7 +257,6 @@ const Supplier = () => {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Quantity (L)</TableHead>
-                    <TableHead>Fat %</TableHead>
                     <TableHead>Rate/L</TableHead>
                     <TableHead>Added By</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
@@ -266,7 +265,7 @@ const Supplier = () => {
                 <TableBody>
                   {collections.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
                         No collections yet
                       </TableCell>
                     </TableRow>
@@ -277,7 +276,6 @@ const Supplier = () => {
                           {format(new Date(collection.collection_date), 'MMM dd, yyyy')}
                         </TableCell>
                         <TableCell>{Number(collection.quantity_liters).toFixed(2)}</TableCell>
-                        <TableCell>{Number(collection.fat_percentage).toFixed(2)}%</TableCell>
                         <TableCell>₹{Number(collection.rate_per_liter).toFixed(2)}</TableCell>
                         <TableCell>
                           <span className="text-sm font-medium">
