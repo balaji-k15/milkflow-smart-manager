@@ -4,10 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
-import { Search, Trash2, Download } from 'lucide-react';
+import { Search, Trash2, Download, Calendar as CalendarIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface Collection {
   id: string;
@@ -28,6 +31,7 @@ export const CollectionsTable = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [filteredCollections, setFilteredCollections] = useState<Collection[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
@@ -37,16 +41,24 @@ export const CollectionsTable = () => {
   }, []);
 
   useEffect(() => {
+    let filtered = collections;
+    
+    // Filter by search term
     if (searchTerm) {
-      const filtered = collections.filter((collection) =>
+      filtered = filtered.filter((collection) =>
         collection.suppliers.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         collection.suppliers.supplier_code.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredCollections(filtered);
-    } else {
-      setFilteredCollections(collections);
     }
-  }, [searchTerm, collections]);
+    
+    // Filter by date
+    if (selectedDate) {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      filtered = filtered.filter((collection) => collection.collection_date === dateStr);
+    }
+    
+    setFilteredCollections(filtered);
+  }, [searchTerm, selectedDate, collections]);
 
   const fetchCollections = async () => {
     try {
@@ -157,14 +169,49 @@ export const CollectionsTable = () => {
             Download CSV
           </Button>
         </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by supplier name or code..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex gap-2 mt-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by supplier name or code..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[240px] justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          {selectedDate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedDate(undefined)}
+              title="Clear date filter"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
