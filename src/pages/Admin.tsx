@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Milk, Users, DollarSign, Download } from 'lucide-react';
+import { Milk, Users, IndianRupee, Download } from 'lucide-react';
 import { AddCollectionForm } from '@/components/AddCollectionForm';
 import { ManageSuppliers } from '@/components/ManageSuppliers';
 import { CollectionsTable } from '@/components/CollectionsTable';
@@ -135,7 +135,7 @@ const Admin = () => {
           <Card className="hover:shadow-lg transition-shadow border-primary/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Payment</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
+              <IndianRupee className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">₹{stats.todayPayment.toFixed(2)}</div>
