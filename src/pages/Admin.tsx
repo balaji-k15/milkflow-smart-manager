@@ -9,6 +9,7 @@ import { Milk, Users, IndianRupee, Download } from 'lucide-react';
 import { AddCollectionForm } from '@/components/AddCollectionForm';
 import { ManageSuppliers } from '@/components/ManageSuppliers';
 import { CollectionsTable } from '@/components/CollectionsTable';
+import { DailyPaymentSummary } from '@/components/DailyPaymentSummary';
 import { UserProfile } from '@/components/UserProfile';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -149,6 +150,7 @@ const Admin = () => {
           <TabsList>
             <TabsTrigger value="entry">Add Collection</TabsTrigger>
             <TabsTrigger value="collections">View Collections</TabsTrigger>
+            <TabsTrigger value="daily">Daily Summary</TabsTrigger>
             <TabsTrigger value="suppliers">Manage Suppliers</TabsTrigger>
           </TabsList>
 
@@ -158,6 +160,10 @@ const Admin = () => {
 
           <TabsContent value="collections" className="space-y-4">
             <CollectionsTable />
+          </TabsContent>
+
+          <TabsContent value="daily" className="space-y-4">
+            <DailyPaymentSummary />
           </TabsContent>
 
           <TabsContent value="suppliers" className="space-y-4">
